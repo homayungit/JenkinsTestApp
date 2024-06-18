@@ -38,6 +38,26 @@ pipeline {
                 }
             }
         }
+        stage('Deploy') {
+            steps {
+                script {
+                      withCredentials([usernamePassword(credentialsId: 'coreuser', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
+                    powershell '''
+                    
+                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
+
+                    
+                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\Homayun-IT\\JenkinsTestApp" -Persist -Credential $credentials
+
+                    
+                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
+
+                    
+                    Remove-PSDrive -Name X
+                    '''
+                }
+            }
+        }
     }
     
     post {               
