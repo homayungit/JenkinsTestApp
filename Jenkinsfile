@@ -2,8 +2,6 @@ pipeline {
     agent any
     
     environment {
-        // Define any environment variables here
-        // DOTNET_VERSION = '5.0' // Change this to your required .NET Core version
         DOTNET_CLI_HOME = "C:\\Program Files\\dotnet"
     }
     
@@ -38,32 +36,29 @@ pipeline {
                 }
             }
         }
+        
         stage('Deploy') {
             steps {
                 script {
-                      withCredentials([usernamePassword(credentialsId: 'JenkinsTestApp', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
-                    powershell '''
-                    
-                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
-
-                    
-                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\Homayun-IT\\JenkinsTestApp" -Persist -Credential $credentials
-
-                    
-                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
-
-                    
-                    Remove-PSDrive -Name X
-                    '''
+                    withCredentials([usernamePassword(credentialsId: 'JenkinsTestApp', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
+                        powershell '''
+                            $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
+                            New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\Homayun-IT\\JenkinsTestApp" -Persist -Credential $credentials
+                            Copy-Item -Path ".\\publish\\*" -Destination "X:\\" -Recurse -Force
+                            Remove-PSDrive -Name X
+                        '''
+                    }
                 }
             }
         }
     }
     
-    post {               
+    post {
         success {
             echo 'The build was successful!'
-            }       
+        }       
+        failure {
+            echo 'The build failed.'
         }
     }
 }
