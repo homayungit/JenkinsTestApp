@@ -63,6 +63,7 @@ pipeline {
     post {               
         success {
             echo 'The build was successful!'
-        }       
+            }       
+        }
     }
 }
