@@ -42,17 +42,19 @@ pipeline {
                     // Remove existing site content (optional if needed)
                     // bat "Remove-WebSite -Name ${IIS_SITE_NAME} -Force"
                     
+                    // Conditional check and directory creation
+                    bat '''
+                        if exist E:\\TUTORIALS\\DeployPath\\JenkinsTestApp (
+                            rmdir /S /Q E:\\TUTORIALS\\DeployPath\\JenkinsTestApp
+                        )
+                        mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp
+                    '''
+                    
                     // Deploy to existing IIS site
-                    //bat "xcopy /Y /S ${PUBLISH_DIR}\\* C:\\inetpub\\wwwroot\\${IIS_SITE_NAME}"
-
-                     if exist JenkinsTestApp rmdir JenkinsTestApp /q /s
-                     if not exist E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' mkdir -p E:\\TUTORIALS\\DeployPath\\JenkinsTestApp'
-                     //If not exist bat 'mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' // Create directory if needed
-                     bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* E:\\TUTORIALS\\DeployPath\\JenkinsTestApp\\'
+                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* E:\\TUTORIALS\\DeployPath\\JenkinsTestApp\\'
                     
                     // Start the IIS site
                     bat "iisreset /start"
-
                 }
             }
         }
