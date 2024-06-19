@@ -41,28 +41,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'mytestapp', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
-                        powershell '''
-                            # Creating PSCredential object
-                            $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
-
-                            # Mapping network drive
-                            New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\HOMAYUN-IT\\mytestapp" -Persist -Credential $credentials
-
-                            # Copying files to the destination
-                            Copy-Item -Path ".\\publish\\*" -Destination "X:\\" -Recurse -Force
-
-                            # Removing network drive
-                            Remove-PSDrive -Name X
-                        '''
-                    }
-                }
-            }
-        }
     }
 
     post {
