@@ -1,32 +1,32 @@
 pipeline {
     agent any
-    
+
     environment {
         DOTNET_VERSION = '8.0'  // Adjust this to match your .NET Core SDK version
-        MSBUILD_PATH = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"  // Path to MSBuild
-        IIS_SITE_NAME = 'JenkinsTestApp'  // Replace with your existing IIS site name
         PUBLISH_DIR = "C:\\Jenkins\\workspace\\JenkinsTestApp\\publish"  // Path to publish directory
+        NETWORK_PATH = "\\\\192.168.0.11\\HKTest"  // Network path
+        DRIVE_LETTER = "Z:"
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        
+
         stage('Restore Dependencies') {
             steps {
                 bat "dotnet restore"
             }
         }
-        
+
         stage('Build') {
             steps {
                 bat "dotnet build --configuration Release"
             }
         }
-        
+
         stage('Publish') {
             steps {
                 bat "dotnet publish --configuration Release --output ${PUBLISH_DIR}"
@@ -38,27 +38,33 @@ pipeline {
                 script {
                     // Stop the IIS site (if already running)
                     bat "iisreset /stop"
-                    
+
+                    // Map network drive
+                    bat """
+                        net use ${DRIVE_LETTER} ${NETWORK_PATH} /user:application app@dm1n
+                    """
+
                     // Conditional check and directory creation
-                    //bat '''
-                        //if exist Z:\ (
-                            //rmdir /S /Q Z:\
-                        //)
-                        //mkdir Z:\
-                    //'''
-                    
+                    bat """
+                        if exist ${DRIVE_LETTER}\\JenkinsTestApp (
+                            rmdir /S /Q ${DRIVE_LETTER}\\JenkinsTestApp
+                        )
+                        mkdir ${DRIVE_LETTER}\\JenkinsTestApp
+                    """
+
                     // Deploy to existing IIS site
-                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* Z:\'
-                    
+                    bat "xcopy /Y /S ${PUBLISH_DIR}\\* ${DRIVE_LETTER}\\JenkinsTestApp\\"
+
+                    // Unmap network drive
+                    bat "net use ${DRIVE_LETTER} /delete"
+
                     // Start the IIS site
                     bat "iisreset /start"
                 }
             }
         }
-
-
     }
-    
+
     post {
         success {
             echo 'Deployment to IIS completed successfully!'
