@@ -1,73 +1,63 @@
 pipeline {
     agent any
-
+    
     environment {
-        DOTNET_CLI_HOME = "C:\\Program Files\\dotnet"
+        DOTNET_VERSION = '8.0'  // Adjust this to match your .NET Core SDK version
+        MSBUILD_PATH = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"  // Path to MSBuild
+        IIS_SITE_NAME = 'JenkinsTestApp'  // Replace with your IIS site name
+        PUBLISH_DIR = "C:\\Jenkins\\workspace\\JenkinsTestApp\\publish"  // Path to publish directory
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
+        
+        stage('Restore Dependencies') {
+            steps {
+                bat "dotnet restore"
+            }
+        }
+        
         stage('Build') {
             steps {
-                script {
-                    // Restoring dependencies
-                    //bat "cd ${DOTNET_CLI_HOME} && dotnet restore"
-                    bat "dotnet restore"
-
-                    // Building the application
-                    bat "dotnet build --configuration Release"
-                }
+                bat "dotnet build --configuration Release"
             }
         }
-
-        stage('Test') {
-            steps {
-                script {
-                    // Running tests
-                    bat "dotnet test --no-restore --configuration Release"
-                }
-            }
-        }
-
+        
         stage('Publish') {
             steps {
-                script {
-                    // Publishing the application
-                    bat "dotnet publish --no-restore --configuration Release --output .\\publish"
-                }
+                bat "dotnet publish --configuration Release --output ${PUBLISH_DIR}"
             }
         }
-        stage('Deploy') {
+        
+        stage('Deploy to IIS') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'HKTest', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
-                    powershell '''
+                    // Stop the IIS site (if already running)
+                    bat "iisreset /stop"
                     
-                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
-
+                    // Remove existing site content
+                    bat "Remove-WebSite -Name ${IIS_SITE_NAME} -Force"
                     
-                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\192.168.0.11\\HKTest" -Persist -Credential $credentials
-
+                    // Create new IIS site
+                    bat "New-WebSite -Name ${IIS_SITE_NAME} -PhysicalPath ${PUBLISH_DIR} -Port 8050 -Force"
                     
-                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
-
-                    
-                    Remove-PSDrive -Name X
-                    '''
-                }
+                    // Start the IIS site
+                    bat "iisreset /start"
                 }
             }
         }
     }
-
+    
     post {
         success {
-            echo 'Build, test, and publish successful!'
+            echo 'Deployment to IIS completed successfully!'
+        }
+        failure {
+            echo 'Deployment to IIS failed.'
         }
     }
 }
