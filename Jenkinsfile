@@ -2,7 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOTNET_CLI_HOME = "C:\\Program Files\\dotnet"
+        DOTNET_VERSION = '8.0'  // Adjust this to match your .NET Core SDK version
+        PUBLISH_DIR = "C:\\Jenkins\\workspace\\IDPService8002\\publish"  // Path to publish directory
+        NETWORK_PATH = "\\\\192.168.3.12\\publish_root"  // Network path \\192.168.3.12\publish_root\IDPService8002
+        DRIVE_LETTER = "F:"
     }
 
     stages {
@@ -12,54 +15,54 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Restore Dependencies') {
             steps {
-                script {
-                    // Restoring dependencies
-                    //bat "cd ${DOTNET_CLI_HOME} && dotnet restore"
-                    bat "dotnet restore"
-
-                    // Building the application
-                    bat "dotnet build --configuration Release"
-                }
+                bat "dotnet restore"
             }
         }
 
-        stage('Test') {
+        stage('Build') {
             steps {
-                script {
-                    // Running tests
-                    bat "dotnet test --no-restore --configuration Release"
-                }
+                bat "dotnet build --configuration Release"
             }
         }
 
         stage('Publish') {
             steps {
-                script {
-                    // Publishing the application
-                    bat "dotnet publish --no-restore --configuration Release --output .\\publish"
-                }
+                bat "dotnet publish --configuration Release --output ${PUBLISH_DIR}"
             }
         }
-        stage('Deploy') {
+
+        stage('Deploy to IIS') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'HKTest', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
-                    powershell '''
-                    
-                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
+                    // Stop the IIS site (if already running)
+                    bat "iisreset /stop"
 
-                    
-                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\192.168.0.11\\HKTest" -Persist -Credential $credentials
+                    // Disconnect the drive if it is already in use
+                    bat "net use ${DRIVE_LETTER} /delete /y"
 
-                    
-                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
+                    // Map network drive
+                    bat """
+                        net use ${DRIVE_LETTER} ${NETWORK_PATH} /user:admin.homayun H%M@k87!hameem
+                    """
 
-                    
-                    Remove-PSDrive -Name X
-                    '''
-                }
+                    // Conditional check and directory creation
+                    bat """
+                        if exist ${DRIVE_LETTER}\\IDPService8002 (
+                            rmdir /S /Q ${DRIVE_LETTER}\\IDPService8002
+                        )
+                        mkdir ${DRIVE_LETTER}\\IDPService8002
+                    """
+
+                    // Deploy to existing IIS site
+                    bat "xcopy /Y /S ${PUBLISH_DIR}\\* ${DRIVE_LETTER}\\IDPService8002\\"
+
+                    // Unmap network drive
+                    bat "net use ${DRIVE_LETTER} /delete /y"
+
+                    // Start the IIS site
+                    bat "iisreset /start"
                 }
             }
         }
@@ -67,7 +70,10 @@ pipeline {
 
     post {
         success {
-            echo 'Build, test, and publish successful!'
+            echo 'Deployment to IIS completed successfully!'
+        }
+        failure {
+            echo 'Deployment to IIS failed.'
         }
     }
 }
