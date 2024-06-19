@@ -44,7 +44,10 @@ pipeline {
                     
                     // Deploy to existing IIS site
                     //bat "xcopy /Y /S ${PUBLISH_DIR}\\* C:\\inetpub\\wwwroot\\${IIS_SITE_NAME}"
-                     bat 'mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' // Create directory if needed
+
+                     if exist JenkinsTestApp rmdir JenkinsTestApp /q /s
+                     if not exist E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' mkdir -p E:\\TUTORIALS\\DeployPath\\JenkinsTestApp'
+                     //If not exist bat 'mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' // Create directory if needed
                      bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* E:\\TUTORIALS\\DeployPath\\JenkinsTestApp\\'
                     
                     // Start the IIS site
