@@ -44,14 +44,14 @@ pipeline {
                     
                     // Conditional check and directory creation
                     bat '''
-                        if exist E:\\TUTORIALS\\DeployPath\\JenkinsTestApp (
-                            rmdir /S /Q E:\\TUTORIALS\\DeployPath\\JenkinsTestApp
+                        if exist \\\\192.168.0.11\\HKTest\\JenkinsTestApp (
+                            rmdir /S /Q \\\\192.168.0.11\\HKTest\\JenkinsTestApp
                         )
-                        mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp
+                        mkdir \\\\192.168.0.11\\HKTest\\JenkinsTestApp
                     '''
                     
                     // Deploy to existing IIS site
-                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* E:\\TUTORIALS\\DeployPath\\JenkinsTestApp\\'
+                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* \\\\192.168.0.11\\HKTest\\JenkinsTestApp\\'
                     
                     // Start the IIS site
                     bat "iisreset /start"
