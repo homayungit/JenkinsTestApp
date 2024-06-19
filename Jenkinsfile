@@ -4,8 +4,7 @@ pipeline {
     environment {
         DOTNET_VERSION = '8.0'  // Adjust this to match your .NET Core SDK version
         PUBLISH_DIR = "C:\\Jenkins\\workspace\\IDPService8002\\publish"  // Path to publish directory
-        NETWORK_PATH = "\\\\192.168.3.12\\publish_root"  // Network path
-        DRIVE_LETTER = "F:"
+        LOCAL_DEPLOY_DIR = "C:\inetpub\wwwroot\IDPService8002"  // Local deployment directory
     }
 
     stages {
@@ -36,17 +35,11 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 script {
-                    // Map the network drive
-                    bat "net use ${DRIVE_LETTER} ${NETWORK_PATH} /persistent:no"
-                    
                     // Deploy to existing IIS site
-                    bat "xcopy /Y /S ${PUBLISH_DIR}\\* ${DRIVE_LETTER}\\IDPService8002\\"
-                    
-                    // Unmap the network drive
-                    bat "net use ${DRIVE_LETTER} /delete"
+                    bat "xcopy /Y /S ${PUBLISH_DIR}\\* ${LOCAL_DEPLOY_DIR}\\"
 
                     // Start the IIS site
-                    bat "iisreset /start"
+
                 }
             }
         }
