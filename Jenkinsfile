@@ -43,7 +43,10 @@ pipeline {
                     // bat "Remove-WebSite -Name ${IIS_SITE_NAME} -Force"
                     
                     // Deploy to existing IIS site
-                    bat "xcopy /Y /S ${PUBLISH_DIR}\\* E:\\TUTORIALS\\DeployPath\\${IIS_SITE_NAME}"
+                    //bat "xcopy /Y /S ${PUBLISH_DIR}\\* E:\\TUTORIALS\\DeployPath\\${IIS_SITE_NAME}"
+
+                     bat 'mkdir E:\\TUTORIALS\\DeployPath\\JenkinsTestApp' // Create directory if needed
+                     bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* E:\\TUTORIALS\\DeployPath\\JenkinsTestApp\\'
                     
                     // Start the IIS site
                     bat "iisreset /start"
