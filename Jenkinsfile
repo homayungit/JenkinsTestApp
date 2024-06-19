@@ -32,32 +32,31 @@ pipeline {
                 bat "dotnet publish --configuration Release --output ${PUBLISH_DIR}"
             }
         }
-        
+
         stage('Deploy to IIS') {
             steps {
                 script {
                     // Stop the IIS site (if already running)
                     bat "iisreset /stop"
                     
-                    // Remove existing site content (optional if needed)
-                    // bat "Remove-WebSite -Name ${IIS_SITE_NAME} -Force"
-                    
                     // Conditional check and directory creation
                     bat '''
-                        if exist \\\\192.168.0.11\\HKTest\\JenkinsTestApp (
-                            rmdir /S /Q \\\\192.168.0.11\\HKTest\\JenkinsTestApp
+                        if exist "\\\\192.168.0.11\\HKTest\\JenkinsTestApp" (
+                            rmdir /S /Q "\\\\192.168.0.11\\HKTest\\JenkinsTestApp"
                         )
-                        mkdir \\\\192.168.0.11\\HKTest\\JenkinsTestApp
+                        mkdir "\\\\192.168.0.11\\HKTest\\JenkinsTestApp"
                     '''
                     
                     // Deploy to existing IIS site
-                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* \\\\192.168.0.11\\HKTest\\JenkinsTestApp\\'
+                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* "\\\\192.168.0.11\\HKTest\\JenkinsTestApp\\"'
                     
                     // Start the IIS site
                     bat "iisreset /start"
                 }
             }
         }
+
+
     }
     
     post {
