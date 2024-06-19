@@ -39,17 +39,13 @@ pipeline {
                     // Stop the IIS site (if already running)
                     bat "iisreset /stop"
                     
-                    // Remove existing site content (optional if needed)
-                    // bat "Remove-WebSite -Name ${IIS_SITE_NAME} -Force"
-                    
-                    // Deploy to existing IIS site
-                    //bat "xcopy /Y /S ${PUBLISH_DIR}\\* E:\\TUTORIALS\\DeployPath\\${IIS_SITE_NAME}"
-
-                     bat 'mkdir \\\\192.168.0.11\\HKTest\\JenkinsTestApp' // Create directory if needed
-                     bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* \\\\192.168.0.11\\HKTest\\JenkinsTestApp\\'
+                    // Deploy to network location
+                    bat 'mkdir \\\\192.168.0.11\\HKTest\\JenkinsTestApp' // Create directory if needed
+                    bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* \\\\192.168.0.11\\HKTest\\JenkinsTestApp\\'
                     
                     // Start the IIS site
                     bat "iisreset /start"
+
                 }
             }
         }
