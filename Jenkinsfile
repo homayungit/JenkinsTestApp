@@ -1,44 +1,73 @@
 pipeline {
     agent any
+
+    environment {
+        DOTNET_CLI_HOME = "C:\\Program Files\\dotnet"
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
+
         stage('Build') {
             steps {
-                bat 'dotnet restore'
-                bat 'dotnet build --configuration Release'
+                script {
+                    // Restoring dependencies
+                    //bat "cd ${DOTNET_CLI_HOME} && dotnet restore"
+                    bat "dotnet restore"
+
+                    // Building the application
+                    bat "dotnet build --configuration Release"
+                }
             }
         }
+
         stage('Test') {
             steps {
-                bat 'dotnet test --no-restore --configuration Release'
+                script {
+                    // Running tests
+                    bat "dotnet test --no-restore --configuration Release"
+                }
             }
         }
+
         stage('Publish') {
             steps {
-                bat 'dotnet publish --no-restore --configuration Release --output .\\publish'
+                script {
+                    // Publishing the application
+                    bat "dotnet publish --no-restore --configuration Release --output .\\publish"
+                }
             }
         }
         stage('Deploy') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'mytestapp', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    script {
-                        try {
-                            powershell script: '''
-                                Write-Host "Starting deployment..."
-                                # Your PowerShell deployment script here
-                                Write-Host "Deployment completed successfully."
-                            ''', returnStatus: true, label: 'Deploying Application'
-                        } catch (Exception e) {
-                            echo "Deployment failed: ${e.getMessage()}"
-                            currentBuild.result = 'FAILURE'
-                        }
-                    }
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'mytestapp', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
+                    powershell '''
+                    
+                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
+
+                    
+                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\HOMAYUN-IT\\mytestapp" -Persist -Credential $credentials
+
+                    
+                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
+
+                    
+                    Remove-PSDrive -Name X
+                    '''
+                }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build, test, and publish successful!'
         }
     }
 }
