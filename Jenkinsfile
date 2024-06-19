@@ -40,12 +40,12 @@ pipeline {
                     bat "iisreset /stop"
                     
                     // Conditional check and directory creation
-                    bat '''
-                        if exist Z:\ (
-                            rmdir /S /Q Z:\
-                        )
-                        mkdir Z:\
-                    '''
+                    //bat '''
+                        //if exist Z:\ (
+                            //rmdir /S /Q Z:\
+                        //)
+                        //mkdir Z:\
+                    //'''
                     
                     // Deploy to existing IIS site
                     bat 'xcopy /Y /S C:\\Jenkins\\workspace\\JenkinsTestApp\\publish\\* Z:\'
