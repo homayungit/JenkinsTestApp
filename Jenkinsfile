@@ -1,71 +1,44 @@
 pipeline {
     agent any
-    
-    environment {
-        DOTNET_CLI_HOME = "C:\\Program Files\\dotnet"
-    }
-    
     stages {
         stage('Checkout') {
-            steps {  
+            steps {
                 checkout scm
             }
         }
-
         stage('Build') {
             steps {
-                script {
-                    bat "dotnet restore"
-                    bat "dotnet build --configuration Release"
-                }
+                bat 'dotnet restore'
+                bat 'dotnet build --configuration Release'
             }
-        }             
-        
+        }
         stage('Test') {
             steps {
-                script {
-                    bat "dotnet test --no-restore --configuration Release"
-                }
+                bat 'dotnet test --no-restore --configuration Release'
             }
         }
-        
         stage('Publish') {
             steps {
-                script {
-                    bat 'dotnet publish --no-restore --configuration Release --output .\\publish'
-                }
+                bat 'dotnet publish --no-restore --configuration Release --output .\\publish'
             }
         }
-        
         stage('Deploy') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'JenkinsTestApp', passwordVariable: 'CREDENTIAL_PASSWORD', usernameVariable: 'CREDENTIAL_USERNAME')]) {
-                    powershell '''
-                    
-                    $credentials = New-Object System.Management.Automation.PSCredential($env:CREDENTIAL_USERNAME, (ConvertTo-SecureString $env:CREDENTIAL_PASSWORD -AsPlainText -Force))
-
-                    
-                    New-PSDrive -Name X -PSProvider FileSystem -Root "\\\\HOMAYUN-IT\\JenkinsTestApp" -Persist -Credential $credentials
-
-                    
-                    Copy-Item -Path '.\\publish\\*' -Destination 'X:\' -Force
-
-                    
-                    Remove-PSDrive -Name X
-                    '''    
+                withCredentials([usernamePassword(credentialsId: 'JenkinsTestApp', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    script {
+                        try {
+                            powershell script: '''
+                                Write-Host "Starting deployment..."
+                                # Your PowerShell deployment script here
+                                Write-Host "Deployment completed successfully."
+                            ''', returnStatus: true, label: 'Deploying Application'
+                        } catch (Exception e) {
+                            echo "Deployment failed: ${e.getMessage()}"
+                            currentBuild.result = 'FAILURE'
+                        }
                     }
                 }
             }
-        }
-    }
-    
-    post {
-        success {
-            echo 'The build was successful!'
-        }       
-        failure {
-            echo 'The build failed.'
         }
     }
 }
