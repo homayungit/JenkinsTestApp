@@ -24,7 +24,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'JenkinsTestApp', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                withCredentials([usernamePassword(credentialsId: 'mytestapp', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
                     script {
                         try {
                             powershell script: '''
