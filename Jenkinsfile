@@ -39,6 +39,9 @@ pipeline {
                     // Stop the IIS site (if already running)
                     bat "iisreset /stop"
 
+                    // Disconnect the drive if it is already in use
+                    bat "net use ${DRIVE_LETTER} /delete /y"
+
                     // Map network drive
                     bat """
                         net use ${DRIVE_LETTER} ${NETWORK_PATH} /user:application app@dm1n
@@ -56,7 +59,7 @@ pipeline {
                     bat "xcopy /Y /S ${PUBLISH_DIR}\\* ${DRIVE_LETTER}\\JenkinsTestApp\\"
 
                     // Unmap network drive
-                    bat "net use ${DRIVE_LETTER} /delete"
+                    bat "net use ${DRIVE_LETTER} /delete /y"
 
                     // Start the IIS site
                     bat "iisreset /start"
